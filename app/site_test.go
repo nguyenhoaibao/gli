@@ -3,11 +3,11 @@ package app_test
 import (
 	"testing"
 
-	"github.com/nguyenhoaibao/gotools/app"
+	"github.com/nguyenhoaibao/gli/app"
 )
 
 func TestGetSites(t *testing.T) {
-	sites, err := app.GetSites()
+	sites, err := app.Sites()
 	if err != nil {
 		t.Fatal(err)
 	}

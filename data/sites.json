@@ -2,7 +2,26 @@
   {
     "type": "html",
     "name": "github_trending",
-    "short_name": "ght",
-    "url": "https://www.github.com/trending"
+    "url": "https://www.github.com/trending",
+    "limit": 10
+  },
+  {
+    "type": "json",
+    "name": "hackernews_top",
+    "url": "https://hacker-news.firebaseio.com/v0/topstories.json",
+    "limit": 10
+  },
+  {
+    "type": "json",
+    "name": "hackernews_new",
+    "short_name": "hnn",
+    "url": "https://hacker-news.firebaseio.com/v0/newstories.json",
+    "limit": 10
+  },
+  {
+    "type": "json",
+    "name": "hackernews_job",
+    "url": "https://hacker-news.firebaseio.com/v0/jobstories.json",
+    "limit": 10
   }
 ]

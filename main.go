@@ -1,30 +1,32 @@
 package main
 
 import (
-	"flag"
-	"fmt"
+	"log"
 	"os"
 
+	"github.com/abiosoft/ishell"
+	"github.com/nguyenhoaibao/gli/app"
 	"github.com/nguyenhoaibao/gli/crawler"
 	_ "github.com/nguyenhoaibao/gli/parsers"
 )
 
 func main() {
-	site := flag.String("s", "", "Sites to view")
-	all := flag.Bool("all", false, "Run all configure sites")
-
-	flag.Parse()
-
-	if *all {
-		crawler.RunAll()
-		return
+	sites, err := app.Sites()
+	if err != nil {
+		log.Fatal(err)
+		os.Exit(1)
 	}
 
-	if *site != "" {
-		crawler.Run(*site)
-		return
+	shell := ishell.New()
+	shell.Println("Welcome")
+
+	for _, site := range sites {
+		go func(s *app.Site) {
+			shell.Register(s.Name, func(args ...string) (string, error) {
+				return crawler.Run(s)
+			})
+		}(site)
 	}
 
-	fmt.Println("Not enough arguments. Please run -h for more information.")
-	os.Exit(1)
+	shell.Start()
 }

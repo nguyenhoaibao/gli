@@ -13,11 +13,6 @@ import (
 	"github.com/nguyenhoaibao/gli/parsers"
 )
 
-var site = &app.Site{
-	Type: "html",
-	Name: "github_trending",
-}
-
 func mockServer(content string) *httptest.Server {
 	handerFunc := func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-type", "text/html")
@@ -28,10 +23,15 @@ func mockServer(content string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(handerFunc))
 }
 
-func TestGetResults(t *testing.T) {
+func TestGithubTrendingParseResults(t *testing.T) {
+	var site = &app.Site{
+		Type: "html",
+		Name: "github_trending",
+	}
+
 	content, err := ioutil.ReadFile(filepath.Join("testdata", site.Name+".html"))
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 
 	server := mockServer(string(content[:]))
@@ -41,17 +41,17 @@ func TestGetResults(t *testing.T) {
 
 	resp, err := crawler.Query(site.Url)
 	if err != nil {
-		t.Fatal(err)
+		t.Error(err)
 	}
 	defer resp.Body.Close()
 
 	doc, err := crawler.GetDocumentFromReader(resp.Body)
 
-	var parser parsers.GithubTrendingParser
-	results := parser.ParseResults(doc)
-	if len(results) == 0 {
+	p := parsers.NewGHTrendingParser()
+	items := p.ParseItems(doc, 10)
+	if len(items) <= 0 {
 		t.Errorf("Cannot get any results from site %s", site.Name)
 	}
 
-	parser.Display(results)
+	items.Render()
 }
