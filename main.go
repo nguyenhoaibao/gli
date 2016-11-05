@@ -4,29 +4,36 @@ import (
 	"log"
 	"os"
 
-	"github.com/abiosoft/ishell"
 	"github.com/nguyenhoaibao/gli/app"
 	"github.com/nguyenhoaibao/gli/crawler"
 	_ "github.com/nguyenhoaibao/gli/parsers"
+	"github.com/nguyenhoaibao/gli/shell"
 )
+
+func createHandlerFunc(site *app.Site) func() (string, error) {
+	return func() (string, error) {
+		c := crawler.New(site.Name, site.Url, site.Limit)
+		result, err := c.Crawl()
+		if err != nil {
+			return "", err
+		}
+		return result.Render(), nil
+	}
+}
 
 func main() {
 	sites, err := app.Sites()
 	if err != nil {
 		log.Fatal(err)
-		os.Exit(1)
 	}
 
-	shell := ishell.New()
-	shell.Println("Welcome")
+	shell := shell.New(os.Stdout)
 
 	for _, site := range sites {
-		go func(s *app.Site) {
-			shell.Register(s.Name, func(args ...string) (string, error) {
-				return crawler.Run(s)
-			})
-		}(site)
+		shell.Case(site.Name, createHandlerFunc(site))
 	}
 
-	shell.Start()
+	if err := shell.Start(); err != nil {
+		log.Fatal(err)
+	}
 }
