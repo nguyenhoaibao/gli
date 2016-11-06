@@ -8,7 +8,6 @@ import (
 const dataFile = "data/sites.json"
 
 type Site struct {
-	Type  string `json:"type"`
 	Name  string `json:"name"`
 	Url   string `json:"url"`
 	Limit int    `json:"limit"`

@@ -26,10 +26,10 @@ func TestGithubTrendingParseItems(t *testing.T) {
 	}
 
 	items := p.parse(doc, limit)
-	if len(items) == 0 {
+	if len(*items) == 0 {
 		t.Error("Cannot parse any items")
 	}
-	for _, item := range items {
+	for _, item := range *items {
 		if item.Title == "" {
 			t.Error("Cannot parse title")
 		}

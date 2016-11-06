@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"os"
 
@@ -10,12 +11,12 @@ import (
 	"github.com/nguyenhoaibao/gli/shell"
 )
 
-func createHandlerFunc(site *app.Site) func() (string, error) {
-	return func() (string, error) {
+func createHandlerFunc(site *app.Site) func(args ...string) (io.Reader, error) {
+	return func(args ...string) (io.Reader, error) {
 		c := crawler.New(site.Name, site.Url, site.Limit)
 		result, err := c.Crawl()
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		return result.Render(), nil
 	}
@@ -30,7 +31,7 @@ func main() {
 	shell := shell.New(os.Stdout)
 
 	for _, site := range sites {
-		shell.Case(site.Name, createHandlerFunc(site))
+		shell.Register(site.Name, createHandlerFunc(site))
 	}
 
 	if err := shell.Start(); err != nil {

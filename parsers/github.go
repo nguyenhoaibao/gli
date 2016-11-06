@@ -13,7 +13,7 @@ import (
 
 func init() {
 	var p ghTrendingParser
-	crawler.Register("github_trending", p)
+	crawler.Register("gh_trending", p)
 }
 
 //---------------------------------------------------
@@ -31,7 +31,7 @@ func (c ghTrendingParser) Parse(r io.Reader, limit int) (crawler.Renderer, error
 	return items, nil
 }
 
-func (c ghTrendingParser) parse(doc *goquery.Document, limit int) ghTrendingItems {
+func (c ghTrendingParser) parse(doc *goquery.Document, limit int) *ghTrendingItems {
 	var items ghTrendingItems
 
 	qContainer := doc.Find(".repo-list")
@@ -66,7 +66,7 @@ func (c ghTrendingParser) parse(doc *goquery.Document, limit int) ghTrendingItem
 		})
 	})
 
-	return items
+	return &items
 }
 
 //---------------------------------------------------
@@ -85,12 +85,13 @@ type ghTrendingItem struct {
 
 type ghTrendingItems []*ghTrendingItem
 
-func (items ghTrendingItems) Render() string {
+func (items *ghTrendingItems) Render() *bytes.Buffer {
 	var buffer bytes.Buffer
+	total := len(*items)
 
 	buffer.WriteString("\n")
 
-	for i, item := range items {
+	for i, item := range *items {
 		var indent int
 
 		if i < 9 {
@@ -114,12 +115,12 @@ func (items ghTrendingItems) Render() string {
 			fmt.Fprintf(&buffer, "%s%s", strings.Repeat(" ", 4), color.RedString(item.TodayStars))
 		}
 
-		if i == len(items)-1 {
+		if i == total-1 {
 			fmt.Fprint(&buffer, "\n")
 		} else {
 			fmt.Fprint(&buffer, "\n\n")
 		}
 	}
 
-	return buffer.String()
+	return &buffer
 }

@@ -1,10 +1,14 @@
 package crawler
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"net/http/httptest"
+	"path/filepath"
 	"time"
 )
 
@@ -13,7 +17,7 @@ func init() {
 }
 
 type Renderer interface {
-	Render() string
+	Render() *bytes.Buffer
 }
 
 type Parser interface {
@@ -38,6 +42,16 @@ func Register(name string, parser Parser) error {
 	}
 	parsers[name] = parser
 	return nil
+}
+
+func mockServer(content string) *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-type", "text/html")
+		w.WriteHeader(200)
+		fmt.Fprintf(w, content)
+	}
+
+	return httptest.NewServer(http.HandlerFunc(f))
 }
 
 func (c *crawler) Crawl() (Renderer, error) {
@@ -75,7 +89,16 @@ func (c *crawler) Crawl() (Renderer, error) {
 }
 
 func (c *crawler) Download() (*http.Response, error) {
-	return http.Get(c.url)
+	// return http.Get(c.url)
+	content, err := ioutil.ReadFile(filepath.Join("testdata", c.name+".html"))
+	if err != nil {
+		return nil, err
+	}
+
+	server := mockServer(string(content[:]))
+	defer server.Close()
+
+	return http.Get(server.URL)
 }
 
 func (c *crawler) Parse(body io.Reader) (Renderer, error) {

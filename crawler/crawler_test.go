@@ -26,7 +26,7 @@ func mockServer(content string) *httptest.Server {
 func TestCrawl(t *testing.T) {
 	var sites = []*app.Site{
 		&app.Site{
-			Name:  "github_trending",
+			Name:  "gh_trending",
 			Limit: 10,
 		},
 	}

@@ -1,12 +1,7 @@
 [
   {
-    "name": "github_trending",
+    "name": "gh_trending",
     "url": "https://www.github.com/trending",
     "limit": 25
-  },
-  {
-    "name": "hackernews_top",
-    "url": "https://www.github.com/trending",
-    "limit": 10
   }
 ]
