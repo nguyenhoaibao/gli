@@ -11,6 +11,8 @@ import (
 	"github.com/nguyenhoaibao/gli/crawler"
 )
 
+var cachedItems ghTrendingItems
+
 func init() {
 	var p ghTrendingParser
 	crawler.Register("gh_trending", p)
@@ -27,6 +29,7 @@ func (c ghTrendingParser) Parse(r io.Reader, limit int) (crawler.Renderer, error
 	}
 
 	items := c.parse(doc, limit)
+	copy(cachedItems, *items)
 
 	return items, nil
 }

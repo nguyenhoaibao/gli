@@ -5,16 +5,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"time"
 )
-
-func init() {
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-}
 
 type Renderer interface {
 	Render() *bytes.Buffer
