@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os/exec"
 	"strings"
 
 	readline "gopkg.in/readline.v1"
@@ -12,17 +11,14 @@ import (
 
 const defaultPromp = "gli> "
 
-type handlerFunc func(args ...string) (io.Reader, error)
-
 type shellReader struct {
 	rl *readline.Instance
 }
 
 type shell struct {
-	funcs    map[string]handlerFunc
-	commands map[string]map[string]handlerFunc
-	reader   *shellReader
-	writer   io.Writer
+	funcs  map[string]HandlerFunc
+	reader *shellReader
+	writer io.Writer
 }
 
 func New(w io.Writer) *shell {
@@ -32,17 +28,17 @@ func New(w io.Writer) *shell {
 	}
 
 	s := &shell{
-		funcs:    make(map[string]handlerFunc),
-		commands: make(map[string]map[string]handlerFunc),
+		funcs: make(map[string]HandlerFunc),
 		reader: &shellReader{
 			rl: rl,
 		},
 		writer: w,
 	}
+	addDefaultHandlers(s)
 	return s
 }
 
-func (s *shell) Register(name string, f handlerFunc) error {
+func (s *shell) Register(name string, f HandlerFunc) error {
 	if _, exists := s.funcs[name]; exists {
 		return fmt.Errorf("%s already exists", name)
 	}
@@ -51,29 +47,43 @@ func (s *shell) Register(name string, f handlerFunc) error {
 }
 
 func (s *shell) Start() error {
-	for name, handler := range s.funcs {
+	var (
+		scmds []string
+		mcmds = make(map[string]map[string]string)
+	)
+
+	for name := range s.funcs {
+		if strings.Index(name, "_") == -1 {
+			scmds = append(scmds, name)
+			continue
+		}
+
 		names := strings.Split(name, "_")
 		root, sub := names[0], names[1]
-
-		if _, exists := s.commands[root]; !exists {
-			s.commands[root] = make(map[string]handlerFunc)
+		if _, exists := mcmds[root]; !exists {
+			mcmds[root] = make(map[string]string)
 		}
-		if _, exists := s.commands[root][sub]; !exists {
-			s.commands[root][sub] = handler
+		if _, exists := mcmds[root][sub]; !exists {
+			mcmds[root][sub] = sub
 		}
 	}
 
-	var rootPcItems []readline.PrefixCompleterInterface
-	for root, subHandler := range s.commands {
+	var pcItems []readline.PrefixCompleterInterface
+
+	for root, subs := range mcmds {
 		var subPcItems []readline.PrefixCompleterInterface
 
-		for sub, _ := range subHandler {
+		for sub := range subs {
 			subPcItems = append(subPcItems, readline.PcItem(sub))
 		}
-		rootPcItems = append(rootPcItems, readline.PcItem(root, subPcItems...))
+		pcItems = append(pcItems, readline.PcItem(root, subPcItems...))
 	}
-	completer := readline.NewPrefixCompleter(rootPcItems...)
 
+	for _, name := range scmds {
+		pcItems = append(pcItems, readline.PcItem(name))
+	}
+
+	completer := readline.NewPrefixCompleter(pcItems...)
 	s.reader.rl.SetConfig(&readline.Config{
 		Prompt:       defaultPromp,
 		AutoComplete: completer,
@@ -91,39 +101,45 @@ func (s *shell) Start() error {
 			break
 		}
 	}
-
 	return nil
 }
 
 func (s *shell) handle(line string) error {
-	args := strings.Split(strings.TrimSpace(line), " ")
+	lines := strings.Split(strings.TrimSpace(line), " ")
 
-	_, exists := s.commands[args[0]]
-	if !exists {
-		return nil
-	}
-	handler, exists := s.commands[args[0]][args[1]]
-	if !exists {
-		return nil
-	}
-
-	result, err := handler(args[2:]...)
-	if err != nil {
-		return err
-	}
-	return s.printResult(result)
-}
-
-func (s *shell) printResult(r io.Reader) error {
-	cmd := exec.Command("less", "-r")
-	cmd.Stdin = r
-	cmd.Stdout = s.writer
-
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	if err := cmd.Wait(); err != nil {
+	handled, err := s.handleCommand(lines)
+	if handled || err != nil {
 		return err
 	}
 	return nil
+}
+
+func (s *shell) handleCommand(lines []string) (bool, error) {
+	line := strings.Join(lines, "_")
+
+	for name, handler := range s.funcs {
+		if strings.Index(line, name) == -1 {
+			continue
+		}
+
+		var (
+			result io.Reader
+			err    error
+		)
+
+		if strings.Index(name, "_") == -1 {
+			result, err = handler.Handle(lines[1:]...)
+		} else {
+			result, err = handler.Handle(lines[2:]...)
+		}
+
+		if err != nil {
+			return true, err
+		}
+		if result != nil {
+			Print(result, s.writer)
+		}
+		return true, nil
+	}
+	return false, nil
 }

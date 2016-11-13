@@ -1,7 +1,16 @@
 [
   {
-    "name": "gh_trending",
-    "url": "https://www.github.com/trending",
-    "limit": 25
+    "name": "github",
+    "types": [
+      {
+        "name": "trending",
+        "url": "https://github.com/trending",
+        "limit": 25,
+        "cached_in_seconds": 180
+      }
+    ],
+    "item": {
+      "url_pattern": "https://api.github.com/repos/%s/readme"
+    }
   }
 ]

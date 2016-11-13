@@ -3,14 +3,26 @@ package app
 import (
 	"encoding/json"
 	"os"
+	"time"
 )
 
 const dataFile = "data/sites.json"
 
+type Items struct {
+	Name            string        `json:"name"`
+	Url             string        `json:"url"`
+	Limit           int           `json:"limit"`
+	CachedInSeconds time.Duration `json:"cached_in_seconds"`
+}
+
+type Item struct {
+	UrlPattern string `json:"url_pattern"`
+}
+
 type Site struct {
-	Name  string `json:"name"`
-	Url   string `json:"url"`
-	Limit int    `json:"limit"`
+	Name  string   `json:"name"`
+	Types []*Items `json:"types"`
+	Item  Item     `json:"item"`
 }
 
 func Sites() ([]*Site, error) {
