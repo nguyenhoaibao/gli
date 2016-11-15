@@ -20,7 +20,7 @@ func GetDocumentFromReader(r io.Reader) (*goquery.Document, error) {
 
 func HandlerFunc(categoryCrawler *categoryCrawler, itemCrawler *itemCrawler) func(args ...string) (io.Reader, error) {
 	return func(args ...string) (io.Reader, error) {
-		fmt.Print("Please wait.")
+		fmt.Print("Please wait")
 
 		ch := make(chan io.Reader)
 		chErr := make(chan error)
