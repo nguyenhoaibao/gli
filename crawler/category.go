@@ -9,50 +9,50 @@ import (
 	"time"
 )
 
-type ItemsRenderer interface {
+type CategoryRenderer interface {
 	Total() int
 	ItemN(i int) string
 	Render() io.Reader
 }
 
-type ItemsParser interface {
-	Parse(io.Reader, int) (ItemsRenderer, error)
+type CategoryParser interface {
+	Parse(io.Reader, int) (CategoryRenderer, error)
 }
 
-type itemsCrawler struct {
+type categoryCrawler struct {
 	name            string
 	url             string
 	limit           int
 	cachedInSeconds time.Duration
 	mu              sync.Mutex
-	cached          ItemsRenderer
+	cached          CategoryRenderer
 }
 
-var itemsParser = make(map[string]ItemsParser)
+var categoryParsers = make(map[string]CategoryParser)
 
-func NewItemsCrawler(name string, url string, limit int, cachedInSeconds time.Duration) *itemsCrawler {
-	ic := &itemsCrawler{
+func NewCategoryCrawler(name string, url string, limit int, cachedInSeconds time.Duration) *categoryCrawler {
+	c := &categoryCrawler{
 		name:            name,
 		url:             url,
 		limit:           limit,
 		cachedInSeconds: cachedInSeconds,
 	}
-	ic.refreshCached()
+	c.refreshCached()
 
-	return ic
+	return c
 }
 
-func RegisterItemsParser(name string, p ItemsParser) error {
-	if _, exists := itemsParser[name]; exists {
+func RegisterCategoryParser(name string, p CategoryParser) error {
+	if _, exists := categoryParsers[name]; exists {
 		return fmt.Errorf("Parser %s was already registered", name)
 	}
-	itemsParser[name] = p
+	categoryParsers[name] = p
 	return nil
 }
 
-func (c *itemsCrawler) Crawl() (ItemsRenderer, error) {
-	if items := c.getCached(); items != nil {
-		return items, nil
+func (c *categoryCrawler) Crawl() (CategoryRenderer, error) {
+	if result := c.getCached(); result != nil {
+		return result, nil
 	}
 
 	resp, err := c.Download()
@@ -61,13 +61,13 @@ func (c *itemsCrawler) Crawl() (ItemsRenderer, error) {
 	}
 	defer resp.Body.Close()
 
-	items, err := c.Parse(resp.Body)
+	result, err := c.Parse(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	c.cache(items)
-	return items, nil
+	c.cache(result)
+	return result, nil
 }
 
 func mockServer(content string) *httptest.Server {
@@ -80,7 +80,7 @@ func mockServer(content string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(f))
 }
 
-func (c *itemsCrawler) Download() (*http.Response, error) {
+func (c *categoryCrawler) Download() (*http.Response, error) {
 	return http.Get(c.url)
 	// content, err := ioutil.ReadFile(filepath.Join("testdata", c.name+".html"))
 	// if err != nil {
@@ -93,29 +93,29 @@ func (c *itemsCrawler) Download() (*http.Response, error) {
 	// return http.Get(server.URL)
 }
 
-func (c *itemsCrawler) Parse(r io.Reader) (ItemsRenderer, error) {
-	p, exists := itemsParser[c.name]
+func (c *categoryCrawler) Parse(r io.Reader) (CategoryRenderer, error) {
+	p, exists := categoryParsers[c.name]
 	if !exists {
 		return nil, fmt.Errorf("Parser %s does not exist", c.name)
 	}
 	return p.Parse(r, c.limit)
 }
 
-func (c *itemsCrawler) getCached() ItemsRenderer {
+func (c *categoryCrawler) getCached() CategoryRenderer {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	return c.cached
 }
 
-func (c *itemsCrawler) cache(items ItemsRenderer) {
+func (c *categoryCrawler) cache(result CategoryRenderer) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.cached = items
+	c.cached = result
 }
 
-func (c *itemsCrawler) refreshCached() {
+func (c *categoryCrawler) refreshCached() {
 	ticker := time.NewTicker(time.Second * c.cachedInSeconds)
 	go func() {
 		for {

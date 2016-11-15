@@ -15,22 +15,22 @@ func Start() {
 		log.Fatal(err)
 	}
 
-	s := shell.New(os.Stdout)
+	sh := shell.New(os.Stdout)
 
-	for _, site := range sites {
-		for _, items := range site.Types {
-			itemName := fmt.Sprintf("%s_item", site.Name)
-			itemCrawler := crawler.NewItemCrawler(itemName, site.Item.UrlPattern)
+	for _, s := range sites {
+		for _, c := range s.Categories {
+			itemName := fmt.Sprintf("%s_item", s.Name)
+			itemCrawler := crawler.NewItemCrawler(itemName, s.Item.UrlPattern)
 
-			itemsName := fmt.Sprintf("%s_%s", site.Name, items.Name)
-			itemsCrawler := crawler.NewItemsCrawler(itemsName, items.Url, items.Limit, items.CachedInSeconds)
+			cName := fmt.Sprintf("%s_%s", s.Name, c.Name)
+			cCrawler := crawler.NewCategoryCrawler(cName, c.Url, c.Limit, c.CachedInSeconds)
 
-			handler := crawler.HandlerFunc(itemsCrawler, itemCrawler)
-			s.Register(itemsName, shell.HandlerFunc(handler))
+			handler := crawler.HandlerFunc(cCrawler, itemCrawler)
+			sh.Register(cName, shell.HandlerFunc(handler))
 		}
 	}
 
-	if err := s.Start(); err != nil {
+	if err := sh.Start(); err != nil {
 		log.Fatal(err)
 	}
 }

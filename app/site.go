@@ -8,7 +8,7 @@ import (
 
 const dataFile = "data/sites.json"
 
-type Items struct {
+type Category struct {
 	Name            string        `json:"name"`
 	Url             string        `json:"url"`
 	Limit           int           `json:"limit"`
@@ -20,9 +20,9 @@ type Item struct {
 }
 
 type Site struct {
-	Name  string   `json:"name"`
-	Types []*Items `json:"types"`
-	Item  Item     `json:"item"`
+	Name       string      `json:"name"`
+	Categories []*Category `json:"categories"`
+	Item       Item        `json:"item"`
 }
 
 func Sites() ([]*Site, error) {

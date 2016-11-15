@@ -1,7 +1,7 @@
 [
   {
     "name": "github",
-    "types": [
+    "categories": [
       {
         "name": "trending",
         "url": "https://github.com/trending",

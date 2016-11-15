@@ -18,7 +18,7 @@ func GetDocumentFromReader(r io.Reader) (*goquery.Document, error) {
 	return goquery.NewDocumentFromReader(r)
 }
 
-func HandlerFunc(itemsCrawler *itemsCrawler, itemCrawler *itemCrawler) func(args ...string) (io.Reader, error) {
+func HandlerFunc(categoryCrawler *categoryCrawler, itemCrawler *itemCrawler) func(args ...string) (io.Reader, error) {
 	return func(args ...string) (io.Reader, error) {
 		fmt.Print("Please wait.")
 
@@ -26,7 +26,7 @@ func HandlerFunc(itemsCrawler *itemsCrawler, itemCrawler *itemCrawler) func(args
 		chErr := make(chan error)
 
 		go func() {
-			items, err := itemsCrawler.Crawl()
+			items, err := categoryCrawler.Crawl()
 			if err != nil {
 				chErr <- err
 				return

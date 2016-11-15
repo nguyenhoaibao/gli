@@ -20,7 +20,7 @@ type itemCrawler struct {
 	cached     map[string]ItemRenderer
 }
 
-var itemParser = make(map[string]ItemParser)
+var itemParsers = make(map[string]ItemParser)
 
 func NewItemCrawler(name string, urlPattern string) *itemCrawler {
 	return &itemCrawler{
@@ -31,10 +31,10 @@ func NewItemCrawler(name string, urlPattern string) *itemCrawler {
 }
 
 func RegisterItemParser(name string, p ItemParser) error {
-	if _, exists := itemParser[name]; exists {
+	if _, exists := itemParsers[name]; exists {
 		return fmt.Errorf("Parser %s was already registered", name)
 	}
-	itemParser[name] = p
+	itemParsers[name] = p
 	return nil
 }
 
@@ -73,7 +73,7 @@ func (c *itemCrawler) Download(url string) (*http.Response, error) {
 }
 
 func (c *itemCrawler) Parse(r io.Reader) (ItemRenderer, error) {
-	p, exists := itemParser[c.name]
+	p, exists := itemParsers[c.name]
 	if !exists {
 		return nil, fmt.Errorf("Parser %s does not exist", c.name)
 	}

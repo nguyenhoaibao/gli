@@ -27,8 +27,8 @@ func TestCrawl(t *testing.T) {
 	var sites = []*app.Site{
 		&app.Site{
 			Name: "github",
-			Types: []*app.Items{
-				&app.Items{
+			Categories: []*app.Category{
+				&app.Category{
 					Name:            "trending",
 					Limit:           25,
 					CachedInSeconds: 300,
@@ -37,26 +37,26 @@ func TestCrawl(t *testing.T) {
 		},
 	}
 
-	for _, site := range sites {
-		for _, items := range site.Types {
-			name := fmt.Sprintf("%s_%s", site.Name, items.Name)
-			itemsContent, err := ioutil.ReadFile(filepath.Join("../testdata", fmt.Sprintf("%s.html", name)))
+	for _, s := range sites {
+		for _, c := range s.Categories {
+			cName := fmt.Sprintf("%s_%s", s.Name, c.Name)
+			cContent, err := ioutil.ReadFile(filepath.Join("../testdata", fmt.Sprintf("%s.html", cName)))
 			if err != nil {
 				t.Error(err)
 			}
 
-			server := mockServer(string(itemsContent[:]))
+			server := mockServer(string(cContent[:]))
 			defer server.Close()
 
-			c := crawler.NewItemsCrawler(name, server.URL, items.Limit, items.CachedInSeconds)
-			results, err := c.Crawl()
+			cCrawler := crawler.NewCategoryCrawler(cName, server.URL, c.Limit, c.CachedInSeconds)
+			results, err := cCrawler.Crawl()
 			if err != nil {
 				t.Error(err)
 			}
 			if results == nil {
 				t.Fatal("Items should not be nil")
 			}
-			if results.Total() != items.Limit {
+			if results.Total() != c.Limit {
 				t.Fatal("Total items do not match limit")
 			}
 		}
