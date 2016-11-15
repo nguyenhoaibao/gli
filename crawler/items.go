@@ -55,38 +55,19 @@ func (c *itemsCrawler) Crawl() (ItemsRenderer, error) {
 		return items, nil
 	}
 
-	fmt.Print("Gathering data.")
-
-	chItems := make(chan ItemsRenderer)
-	chErr := make(chan error)
-
-	go func() {
-		resp, err := c.Download()
-		if err != nil {
-			chErr <- err
-			return
-		}
-		defer resp.Body.Close()
-
-		items, err := c.Parse(resp.Body)
-		if err != nil {
-			chErr <- err
-			return
-		}
-		chItems <- items
-	}()
-
-	for {
-		select {
-		case items := <-chItems:
-			c.cache(items)
-			return items, nil
-		case err := <-chErr:
-			return nil, err
-		case <-time.After(500 * time.Millisecond):
-			fmt.Print(".")
-		}
+	resp, err := c.Download()
+	if err != nil {
+		return nil, err
 	}
+	defer resp.Body.Close()
+
+	items, err := c.Parse(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	c.cache(items)
+	return items, nil
 }
 
 func mockServer(content string) *httptest.Server {

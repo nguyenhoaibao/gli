@@ -105,7 +105,7 @@ func (s *shell) Start() error {
 }
 
 func (s *shell) handle(line string) error {
-	lines := strings.Split(strings.TrimSpace(line), " ")
+	lines := strings.Fields(line)
 
 	handled, err := s.handleCommand(lines)
 	if handled || err != nil {

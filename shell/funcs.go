@@ -11,26 +11,7 @@ func Print(r io.Reader, w io.Writer) error {
 	cmd.Stdin = r
 	cmd.Stdout = w
 
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	if err := cmd.Wait(); err != nil {
-		return err
-	}
-	return nil
-}
-
-func ClearScreen() error {
-	cmd := exec.Command("clear")
-	cmd.Stdout = os.Stdout
-
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	if err := cmd.Wait(); err != nil {
-		return err
-	}
-	return nil
+	return cmd.Run()
 }
 
 type HandlerFunc func(args ...string) (io.Reader, error)
@@ -45,7 +26,12 @@ func addDefaultHandlers(s *shell) {
 
 func clearFunc(s *shell) HandlerFunc {
 	return func(args ...string) (io.Reader, error) {
-		err := ClearScreen()
-		return nil, err
+		cmd := exec.Command("clear")
+		cmd.Stdout = os.Stdout
+
+		if err := cmd.Run(); err != nil {
+			return nil, err
+		}
+		return nil, nil
 	}
 }

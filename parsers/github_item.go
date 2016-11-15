@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io"
+	"os/exec"
 
 	"github.com/nguyenhoaibao/gli/crawler"
 )
@@ -12,14 +13,6 @@ import (
 func init() {
 	var p ghItemParser
 	crawler.RegisterItemParser("github_item", p)
-}
-
-//---------------------------------------------------
-
-type ghItemContent []byte
-
-func (b ghItemContent) Render() io.Reader {
-	return bytes.NewBuffer(b)
 }
 
 //---------------------------------------------------
@@ -45,4 +38,22 @@ func (p ghItemParser) Parse(r io.Reader) (crawler.ItemRenderer, error) {
 	}
 
 	return ghItemContent(dec), nil
+}
+
+//---------------------------------------------------
+
+type ghItemContent []byte
+
+func (b ghItemContent) Render() io.Reader {
+	var buffer bytes.Buffer
+
+	cmd := exec.Command("mdv", "-")
+	cmd.Stdin = bytes.NewBuffer(b)
+	cmd.Stdout = &buffer
+
+	// mdv command does not found
+	if err := cmd.Run(); err == nil {
+		return &buffer
+	}
+	return bytes.NewBuffer(b)
 }

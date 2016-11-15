@@ -2,8 +2,10 @@ package crawler
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -18,29 +20,52 @@ func GetDocumentFromReader(r io.Reader) (*goquery.Document, error) {
 
 func HandlerFunc(itemsCrawler *itemsCrawler, itemCrawler *itemCrawler) func(args ...string) (io.Reader, error) {
 	return func(args ...string) (io.Reader, error) {
-		items, err := itemsCrawler.Crawl()
-		if err != nil {
-			return nil, err
-		}
+		fmt.Print("Please wait.")
 
-		if len(args) == 0 {
-			return items.Render(), nil
-		}
+		ch := make(chan io.Reader)
+		chErr := make(chan error)
 
-		i, err := strconv.Atoi(args[0])
-		if err != nil {
-			return nil, err
-		}
+		go func() {
+			items, err := itemsCrawler.Crawl()
+			if err != nil {
+				chErr <- err
+				return
+			}
 
-		id := items.ItemN(i)
-		if id == "" {
-			return nil, nil
-		}
+			if len(args) == 0 {
+				ch <- items.Render()
+				return
+			}
 
-		item, err := itemCrawler.Crawl(id)
-		if err != nil {
-			return nil, err
+			i, err := strconv.Atoi(args[0])
+			if err != nil {
+				chErr <- err
+				return
+			}
+
+			id := items.ItemN(i)
+			if id == "" {
+				ch <- nil
+				return
+			}
+
+			item, err := itemCrawler.Crawl(id)
+			if err != nil {
+				chErr <- err
+				return
+			}
+			ch <- item.Render()
+		}()
+
+		for {
+			select {
+			case result := <-ch:
+				return result, nil
+			case err := <-chErr:
+				return nil, err
+			case <-time.After(500 * time.Millisecond):
+				fmt.Print(".")
+			}
 		}
-		return item.Render(), nil
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"time"
 )
 
 type ItemRenderer interface {
@@ -44,39 +43,20 @@ func (c *itemCrawler) Crawl(id string) (ItemRenderer, error) {
 		return item, nil
 	}
 
-	fmt.Print("Gathering data.")
-
 	url := fmt.Sprintf(c.urlPattern, id)
-	chItem := make(chan ItemRenderer)
-	chErr := make(chan error)
-
-	go func() {
-		resp, err := c.Download(url)
-		if err != nil {
-			chErr <- err
-			return
-		}
-		defer resp.Body.Close()
-
-		item, err := c.Parse(resp.Body)
-		if err != nil {
-			chErr <- err
-			return
-		}
-		chItem <- item
-	}()
-
-	for {
-		select {
-		case item := <-chItem:
-			c.cache(id, item)
-			return item, nil
-		case err := <-chErr:
-			return nil, err
-		case <-time.After(500 * time.Millisecond):
-			fmt.Print(".")
-		}
+	resp, err := c.Download(url)
+	if err != nil {
+		return nil, err
 	}
+	defer resp.Body.Close()
+
+	item, err := c.Parse(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	c.cache(id, item)
+	return item, nil
 }
 
 func (c *itemCrawler) Download(url string) (*http.Response, error) {
