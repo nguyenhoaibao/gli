@@ -10,9 +10,11 @@ import (
 	"github.com/nguyenhoaibao/gli/crawler"
 )
 
+const GITHUB_ITEM_NAME = "github_item"
+
 func init() {
 	var p ghItemParser
-	crawler.RegisterItemParser("github_item", p)
+	crawler.RegisterItemParser(GITHUB_ITEM_NAME, p)
 }
 
 //---------------------------------------------------

@@ -1,6 +1,7 @@
 package shell
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -16,9 +17,10 @@ type shellReader struct {
 }
 
 type shell struct {
-	funcs  map[string]HandlerFunc
-	reader *shellReader
-	writer io.Writer
+	funcs       map[string]HandlerFunc
+	genericFunc HandlerFunc
+	reader      *shellReader
+	writer      io.Writer
 }
 
 func New(w io.Writer) *shell {
@@ -46,31 +48,39 @@ func (s *shell) Register(name string, f HandlerFunc) error {
 	return nil
 }
 
+func (s *shell) RegisterGeneric(f HandlerFunc) error {
+	if s.genericFunc != nil {
+		return errors.New("Generic function already registered")
+	}
+	s.genericFunc = f
+	return nil
+}
+
 func (s *shell) Start() error {
 	var (
-		scmds []string
-		mcmds = make(map[string]map[string]string)
+		sCmds []string
+		mCmds = make(map[string]map[string]string)
 	)
 
 	for name := range s.funcs {
 		if strings.Index(name, "_") == -1 {
-			scmds = append(scmds, name)
+			sCmds = append(sCmds, name)
 			continue
 		}
 
 		names := strings.Split(name, "_")
 		root, sub := names[0], names[1]
-		if _, exists := mcmds[root]; !exists {
-			mcmds[root] = make(map[string]string)
+		if _, exists := mCmds[root]; !exists {
+			mCmds[root] = make(map[string]string)
 		}
-		if _, exists := mcmds[root][sub]; !exists {
-			mcmds[root][sub] = sub
+		if _, exists := mCmds[root][sub]; !exists {
+			mCmds[root][sub] = sub
 		}
 	}
 
 	var pcItems []readline.PrefixCompleterInterface
 
-	for root, subs := range mcmds {
+	for root, subs := range mCmds {
 		var subPcItems []readline.PrefixCompleterInterface
 
 		for sub := range subs {
@@ -79,7 +89,7 @@ func (s *shell) Start() error {
 		pcItems = append(pcItems, readline.PcItem(root, subPcItems...))
 	}
 
-	for _, name := range scmds {
+	for _, name := range sCmds {
 		pcItems = append(pcItems, readline.PcItem(name))
 	}
 
@@ -105,17 +115,24 @@ func (s *shell) Start() error {
 }
 
 func (s *shell) handle(line string) error {
-	lines := strings.Fields(line)
+	args := strings.Fields(line)
 
-	handled, err := s.handleCommand(lines)
-	if handled || err != nil {
+	handled, err := s.handleCommand(args)
+	if err != nil {
 		return err
+	}
+	if handled {
+		return nil
+	}
+
+	if s.genericFunc != nil {
+		return s.genericHandle(args)
 	}
 	return nil
 }
 
-func (s *shell) handleCommand(lines []string) (bool, error) {
-	line := strings.Join(lines, "_")
+func (s *shell) handleCommand(args []string) (bool, error) {
+	line := strings.Join(args, "_")
 
 	for name, handler := range s.funcs {
 		if strings.Index(line, name) == -1 {
@@ -128,9 +145,9 @@ func (s *shell) handleCommand(lines []string) (bool, error) {
 		)
 
 		if strings.Index(name, "_") == -1 {
-			result, err = handler.Handle(lines[1:]...)
+			result, err = handler.Handle(args[1:]...)
 		} else {
-			result, err = handler.Handle(lines[2:]...)
+			result, err = handler.Handle(args[2:]...)
 		}
 
 		if err != nil {
@@ -142,4 +159,15 @@ func (s *shell) handleCommand(lines []string) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+func (s *shell) genericHandle(args []string) error {
+	result, err := s.genericFunc(args...)
+	if err != nil {
+		return err
+	}
+	if result != nil {
+		Print(result, s.writer)
+	}
+	return nil
 }

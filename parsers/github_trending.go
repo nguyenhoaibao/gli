@@ -11,9 +11,11 @@ import (
 	"github.com/nguyenhoaibao/gli/crawler"
 )
 
+const GITHUB_TRENDING_NAME = "github_trending"
+
 func init() {
 	var p ghTrendingParser
-	crawler.RegisterCategoryParser("github_trending", p)
+	crawler.RegisterCategoryParser(GITHUB_TRENDING_NAME, p)
 }
 
 //---------------------------------------------------
