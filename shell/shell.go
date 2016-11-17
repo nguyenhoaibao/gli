@@ -17,10 +17,10 @@ type shellReader struct {
 }
 
 type shell struct {
-	funcs       map[string]HandlerFunc
-	genericFunc HandlerFunc
-	reader      *shellReader
-	writer      io.Writer
+	funcs          map[string]HandlerFunc
+	genericHandler HandlerFunc
+	reader         *shellReader
+	writer         io.Writer
 }
 
 func New(w io.Writer) *shell {
@@ -49,10 +49,10 @@ func (s *shell) Register(name string, f HandlerFunc) error {
 }
 
 func (s *shell) RegisterGeneric(f HandlerFunc) error {
-	if s.genericFunc != nil {
+	if s.genericHandler != nil {
 		return errors.New("Generic function already registered")
 	}
-	s.genericFunc = f
+	s.genericHandler = f
 	return nil
 }
 
@@ -125,10 +125,7 @@ func (s *shell) handle(line string) error {
 		return nil
 	}
 
-	if s.genericFunc != nil {
-		return s.genericHandle(args)
-	}
-	return nil
+	return s.genericHandle(args)
 }
 
 func (s *shell) handleCommand(args []string) (bool, error) {
@@ -162,7 +159,11 @@ func (s *shell) handleCommand(args []string) (bool, error) {
 }
 
 func (s *shell) genericHandle(args []string) error {
-	result, err := s.genericFunc(args...)
+	if s.genericHandler == nil {
+		return nil
+	}
+
+	result, err := s.genericHandler.Handle(args...)
 	if err != nil {
 		return err
 	}

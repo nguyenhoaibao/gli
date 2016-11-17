@@ -32,7 +32,8 @@ func Start() {
 
 	// generic handler
 	// handler for all input command
-	sh.RegisterGeneric(crawler.GenericHandlerFunc())
+	genericHandler := crawler.GenericHandlerFunc()
+	sh.RegisterGeneric(shell.HandlerFunc(genericHandler))
 
 	if err := sh.Start(); err != nil {
 		log.Fatal(err)

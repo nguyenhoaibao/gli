@@ -33,14 +33,19 @@ func handlerFunc(cc *categoryCrawler, ic *itemCrawler, args ...string) (io.Reade
 	setCurrentCrawler(cc, ic)
 
 	go func() {
-		results, err := cc.Crawl()
+		items, err := cc.Crawl()
 		if err != nil {
 			chErr <- err
 			return
 		}
 
 		if len(args) == 0 {
-			ch <- results.Render()
+			ch <- items.Render()
+			return
+		}
+
+		if ic == nil {
+			ch <- nil
 			return
 		}
 
@@ -52,7 +57,7 @@ func handlerFunc(cc *categoryCrawler, ic *itemCrawler, args ...string) (io.Reade
 			return
 		}
 
-		id := results.ItemN(i)
+		id := items.ItemN(i)
 		if id == "" {
 			ch <- nil
 			return

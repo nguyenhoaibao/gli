@@ -21,7 +21,7 @@ func init() {
 //---------------------------------------------------
 
 type (
-	ghTrendingResult struct {
+	ghTrendingItem struct {
 		Title       string
 		Owner       string
 		Description string
@@ -31,27 +31,27 @@ type (
 		TodayStars  string
 	}
 
-	ghTrendingResults []*ghTrendingResult
+	ghTrendingItems []*ghTrendingItem
 )
 
-func (results ghTrendingResults) Total() int {
-	return len(results)
+func (items ghTrendingItems) Total() int {
+	return len(items)
 }
 
-func (results ghTrendingResults) ItemN(i int) string {
-	if results.Total() < i {
+func (items ghTrendingItems) ItemN(i int) string {
+	if items.Total() < i {
 		return ""
 	}
-	return results[i-1].Title
+	return items[i-1].Title
 }
 
-func (results ghTrendingResults) Render() io.Reader {
+func (items ghTrendingItems) Render() io.Reader {
 	var buffer bytes.Buffer
-	total := len(results)
+	total := len(items)
 
 	buffer.WriteString("\n")
 
-	for i, r := range results {
+	for i, item := range items {
 		var indent int
 
 		if i < 9 {
@@ -63,16 +63,16 @@ func (results ghTrendingResults) Render() io.Reader {
 		idxStr := fmt.Sprintf("%d", i+1)
 
 		// print title
-		fmt.Fprintf(&buffer, "%s.%s%s\n", color.CyanString(idxStr), strings.Repeat(" ", indent), color.YellowString(r.Title))
+		fmt.Fprintf(&buffer, "%s.%s%s\n", color.CyanString(idxStr), strings.Repeat(" ", indent), color.YellowString(item.Title))
 
 		// print description
-		fmt.Fprintf(&buffer, "%s%s\n", strings.Repeat(" ", 4), color.MagentaString(r.Description))
+		fmt.Fprintf(&buffer, "%s%s\n", strings.Repeat(" ", 4), color.MagentaString(item.Description))
 
 		// print meta
-		if r.Language != "" {
-			fmt.Fprintf(&buffer, "%s%s | %s", strings.Repeat(" ", 4), color.GreenString(r.Language), color.RedString(r.TodayStars))
+		if item.Language != "" {
+			fmt.Fprintf(&buffer, "%s%s | %s", strings.Repeat(" ", 4), color.GreenString(item.Language), color.RedString(item.TodayStars))
 		} else {
-			fmt.Fprintf(&buffer, "%s%s", strings.Repeat(" ", 4), color.RedString(r.TodayStars))
+			fmt.Fprintf(&buffer, "%s%s", strings.Repeat(" ", 4), color.RedString(item.TodayStars))
 		}
 
 		if i == total-1 {
@@ -96,13 +96,13 @@ func (p ghTrendingParser) Parse(r io.Reader, limit int) (crawler.CategoryRendere
 	return p.parse(doc, limit), nil
 }
 
-func (p ghTrendingParser) parse(doc *goquery.Document, limit int) ghTrendingResults {
-	var results ghTrendingResults
+func (p ghTrendingParser) parse(doc *goquery.Document, limit int) ghTrendingItems {
+	var items ghTrendingItems
 
 	qContainer := doc.Find(".repo-list")
 	qItems := qContainer.Find("li")
 	qItems.Each(func(_ int, s *goquery.Selection) {
-		if len(results) >= limit {
+		if len(items) >= limit {
 			return
 		}
 
@@ -117,7 +117,7 @@ func (p ghTrendingParser) parse(doc *goquery.Document, limit int) ghTrendingResu
 		totalStars := strings.TrimSpace(qMeta.Find("a[aria-label=Stargazers]").Text())
 		todayStars := strings.TrimSpace(qMeta.Find("span.float-right").Text())
 
-		results = append(results, &ghTrendingResult{
+		items = append(items, &ghTrendingItem{
 			Title:       title,
 			Owner:       owner,
 			Description: description,
@@ -128,5 +128,5 @@ func (p ghTrendingParser) parse(doc *goquery.Document, limit int) ghTrendingResu
 		})
 	})
 
-	return results
+	return items
 }
