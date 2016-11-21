@@ -39,7 +39,7 @@ func (items ghTrendingItems) Total() int {
 }
 
 func (items ghTrendingItems) ItemN(i int) string {
-	if items.Total() < i {
+	if i > items.Total() {
 		return ""
 	}
 	return items[i-1].Title
@@ -47,9 +47,7 @@ func (items ghTrendingItems) ItemN(i int) string {
 
 func (items ghTrendingItems) Render() io.Reader {
 	var buffer bytes.Buffer
-	total := len(items)
-
-	buffer.WriteString("\n")
+	fmt.Fprintf(&buffer, "\n")
 
 	for i, item := range items {
 		var indent int
@@ -60,25 +58,23 @@ func (items ghTrendingItems) Render() io.Reader {
 			indent = 1
 		}
 
-		idxStr := fmt.Sprintf("%d", i+1)
+		iStr := fmt.Sprintf("%d", i+1)
 
 		// print title
-		fmt.Fprintf(&buffer, "%s.%s%s\n", color.CyanString(idxStr), strings.Repeat(" ", indent), color.YellowString(item.Title))
+		fmt.Fprintf(&buffer, "%s.%s%s\n", color.CyanString(iStr), strings.Repeat(" ", indent), color.YellowString(item.Title))
 
 		// print description
 		fmt.Fprintf(&buffer, "%s%s\n", strings.Repeat(" ", 4), color.MagentaString(item.Description))
 
 		// print meta
 		if item.Language != "" {
-			fmt.Fprintf(&buffer, "%s%s | %s", strings.Repeat(" ", 4), color.GreenString(item.Language), color.RedString(item.TodayStars))
+			fmt.Fprintf(&buffer, "%s%s | %s\n", strings.Repeat(" ", 4), color.GreenString(item.Language), color.RedString(item.TodayStars))
 		} else {
-			fmt.Fprintf(&buffer, "%s%s", strings.Repeat(" ", 4), color.RedString(item.TodayStars))
+			fmt.Fprintf(&buffer, "%s%s\n", strings.Repeat(" ", 4), color.RedString(item.TodayStars))
 		}
 
-		if i == total-1 {
+		if i != items.Total()-1 {
 			fmt.Fprint(&buffer, "\n")
-		} else {
-			fmt.Fprint(&buffer, "\n\n")
 		}
 	}
 	return &buffer
@@ -89,7 +85,7 @@ func (items ghTrendingItems) Render() io.Reader {
 type ghTrendingParser struct{}
 
 func (p ghTrendingParser) Parse(r io.Reader, limit int) (crawler.CategoryRenderer, error) {
-	doc, err := crawler.GetDocumentFromReader(r)
+	doc, err := crawler.DocumentFromReader(r)
 	if err != nil {
 		return nil, err
 	}

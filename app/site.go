@@ -39,3 +39,16 @@ func Sites() ([]*Site, error) {
 
 	return sites, nil
 }
+
+func ItemUrlPatternBySiteName(name string) string {
+	sites, err := Sites()
+	if err != nil {
+		return ""
+	}
+	for _, s := range sites {
+		if s.Name == name && s.Item.UrlPattern != "" {
+			return s.Item.UrlPattern
+		}
+	}
+	return ""
+}

@@ -83,7 +83,7 @@ func handlerFunc(cc *categoryCrawler, ic *itemCrawler, args ...string) (io.Reade
 	}
 }
 
-func GetDocumentFromReader(r io.Reader) (*goquery.Document, error) {
+func DocumentFromReader(r io.Reader) (*goquery.Document, error) {
 	if r == nil {
 		return nil, errors.New("Params is required")
 	}

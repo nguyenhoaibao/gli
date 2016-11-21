@@ -12,5 +12,40 @@
     "item": {
       "url_pattern": "https://api.github.com/repos/%s/readme"
     }
+  },
+  {
+    "name": "hackernews",
+    "categories": [
+      {
+        "name": "top",
+        "url": "https://news.ycombinator.com/",
+        "limit": 30,
+        "cached_in_seconds": 180
+      },
+      {
+        "name": "new",
+        "url": "https://news.ycombinator.com/newest",
+        "limit": 30,
+        "cached_in_seconds": 180
+      },
+      {
+        "name": "show",
+        "url": "https://news.ycombinator.com/show",
+        "limit": 30,
+        "cached_in_seconds": 180
+      },
+      {
+        "name": "ask",
+        "url": "https://news.ycombinator.com/ask",
+        "limit": 30,
+        "cached_in_seconds": 180
+      },
+      {
+        "name": "jobs",
+        "url": "https://news.ycombinator.com/jobs",
+        "limit": 30,
+        "cached_in_seconds": 180
+      }
+    ]
   }
 ]

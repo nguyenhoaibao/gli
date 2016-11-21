@@ -20,26 +20,26 @@ func TestGithubTrendingParser(t *testing.T) {
 		limit = 10
 	)
 
-	doc, err := crawler.GetDocumentFromReader(r)
+	doc, err := crawler.DocumentFromReader(r)
 	if err != nil {
 		t.Error(err)
 	}
 
-	results := p.parse(doc, limit)
-	if len(results) == 0 {
+	items := p.parse(doc, limit)
+	if len(items) == 0 {
 		t.Error("Cannot parse any items")
 	}
-	for _, r := range results {
-		if r.Title == "" {
+	for _, item := range items {
+		if item.Title == "" {
 			t.Error("Cannot parse title")
 		}
-		if r.Owner == "" {
+		if item.Owner == "" {
 			t.Error("Cannot parse owner")
 		}
-		if r.Description == "" {
+		if item.Description == "" {
 			t.Error("Cannot parse description")
 		}
-		if r.TodayStars == "" {
+		if item.TodayStars == "" {
 			t.Error("Cannot parse today stars")
 		}
 	}
