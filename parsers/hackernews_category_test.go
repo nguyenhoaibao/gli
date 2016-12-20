@@ -30,18 +30,12 @@ func TestHackernewsCategoryParser(t *testing.T) {
 		t.Error("Cannot parse any items")
 	}
 	fmt.Println(items.Render())
-	// for _, r := range results {
-	// 	if r.Title == "" {
-	// 		t.Error("Cannot parse title")
-	// 	}
-	// 	if r.Owner == "" {
-	// 		t.Error("Cannot parse owner")
-	// 	}
-	// 	if r.Description == "" {
-	// 		t.Error("Cannot parse description")
-	// 	}
-	// 	if r.TodayStars == "" {
-	// 		t.Error("Cannot parse today stars")
-	// 	}
-	// }
+	for _, item := range items {
+		if item.Id == "" {
+			t.Error("Cannot parse id")
+		}
+		if item.Title == "" {
+			t.Error("Cannot parse title")
+		}
+	}
 }

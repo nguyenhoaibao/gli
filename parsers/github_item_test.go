@@ -24,4 +24,5 @@ func TestParseGithubItem(t *testing.T) {
 	if item == nil {
 		t.Error("Cannot parse github item")
 	}
+	item.Render()
 }

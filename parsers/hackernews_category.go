@@ -33,8 +33,17 @@ func parseHNCategory(doc *goquery.Document, limit int) hnCategoryItems {
 		} else if subtext := s.Find("td.subtext"); subtext.Length() > 0 {
 			score := subtext.Find("span.score").Text()
 			by := subtext.Find("a.hnuser").Text()
-			time := subtext.Find("span.age").Text()
-			totalComments := subtext.Find("a[href^=item]").Last().Text()
+
+			var time, totalComments string
+
+			qLinks := subtext.Find("a[href^=item]")
+			qLinks.Each(func(_ int, link *goquery.Selection) {
+				if link.ParentFiltered(".age").Length() > 0 {
+					time = link.Text()
+				} else if link.ParentFiltered(".subtext").Length() > 0 {
+					totalComments = link.Text()
+				}
+			})
 
 			items[total-1].Score = score
 			items[total-1].By = by
@@ -44,7 +53,6 @@ func parseHNCategory(doc *goquery.Document, limit int) hnCategoryItems {
 	})
 
 	items = items[:limit]
-
 	return items
 }
 
@@ -108,6 +116,10 @@ func (items hnCategoryItems) Render() io.Reader {
 			fmt.Fprintf(&buffer, " | %s", item.TotalComments)
 		}
 		fmt.Fprintf(&buffer, "\n")
+
+		if i != items.Total()-1 {
+			fmt.Fprint(&buffer, "\n")
+		}
 	}
 
 	return &buffer

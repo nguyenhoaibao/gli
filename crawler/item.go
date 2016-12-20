@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 )
 
 type ItemRenderer interface {
@@ -23,11 +24,24 @@ type itemCrawler struct {
 var itemParsers = make(map[string]ItemParser)
 
 func NewItemCrawler(name string, urlPattern string) *itemCrawler {
+	if urlPattern == "" {
+		return nil
+	}
 	return &itemCrawler{
 		name:       name,
 		urlPattern: urlPattern,
 		cached:     make(map[string]ItemRenderer),
 	}
+}
+
+func mockServer(content string) *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		// w.Header().Set("Content-type", "text/html")
+		fmt.Fprintf(w, content)
+	}
+
+	return httptest.NewServer(http.HandlerFunc(f))
 }
 
 func RegisterItemParser(name string, p ItemParser) error {
@@ -60,16 +74,16 @@ func (c *itemCrawler) Crawl(id string) (ItemRenderer, error) {
 }
 
 func (c *itemCrawler) Download(url string) (*http.Response, error) {
-	return http.Get(url)
-	// content, err := ioutil.ReadFile(filepath.Join("testdata", c.name+".json"))
+	// return http.Get(url)
+	// content, err := ioutil.ReadFile("./testdata/markdown_content.md")
 	// if err != nil {
 	// 	return nil, err
 	// }
-	//
-	// server := mockServer(string(content[:]))
-	// defer server.Close()
-	//
-	// return http.Get(server.URL)
+
+	server := mockServer("")
+	defer server.Close()
+
+	return http.Get(server.URL)
 }
 
 func (c *itemCrawler) Parse(r io.Reader) (ItemRenderer, error) {

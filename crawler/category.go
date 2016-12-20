@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/httptest"
 	"sync"
 	"time"
 )
@@ -68,16 +67,6 @@ func (c *categoryCrawler) Crawl() (CategoryRenderer, error) {
 
 	c.cache(result)
 	return result, nil
-}
-
-func mockServer(content string) *httptest.Server {
-	f := func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-type", "text/html")
-		w.WriteHeader(200)
-		fmt.Fprintf(w, content)
-	}
-
-	return httptest.NewServer(http.HandlerFunc(f))
 }
 
 func (c *categoryCrawler) Download() (*http.Response, error) {
