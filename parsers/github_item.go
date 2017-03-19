@@ -2,12 +2,12 @@ package parsers
 
 import (
 	"bytes"
-	"fmt"
+	"encoding/base64"
+	"encoding/json"
 	"io"
-	"io/ioutil"
 
+	"github.com/nguyenhoaibao/gli/cli"
 	"github.com/nguyenhoaibao/gli/crawler"
-	"github.com/nguyenhoaibao/gli/tr"
 	"github.com/russross/blackfriday"
 )
 
@@ -15,9 +15,9 @@ const (
 	GithubItemName = "github_item"
 
 	commonTerminalFlags = 0 |
-		tr.THeaderWithLevel |
-		tr.THeaderWithLineSuffix |
-		tr.TCodeWithBacktick
+		cli.THeaderMarkdown |
+		cli.THeaderAppendLine |
+		cli.TCodeMarkdown
 )
 
 func init() {
@@ -36,20 +36,20 @@ type (
 )
 
 func (p ghItemParser) Parse(r io.Reader) (crawler.ItemRenderer, error) {
-	// var item ghItem
-	// err := json.NewDecoder(r).Decode(&item)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	var item ghItem
+	err := json.NewDecoder(r).Decode(&item)
+	if err != nil {
+		return nil, err
+	}
 
-	// dec, err := base64.StdEncoding.DecodeString(item.Content)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	dec, err := base64.StdEncoding.DecodeString(item.Content)
+	if err != nil {
+		return nil, err
+	}
 
 	// fmt.Println(string(dec))
 
-	dec, _ := ioutil.ReadFile("./testdata/markdown_content.md")
+	// dec, _ := ioutil.ReadFile("./testdata/markdown_content.md")
 
 	return ghItemContent(dec), nil
 }
@@ -71,15 +71,8 @@ func (c ghItemContent) Render() io.Reader {
 	// }
 	// return bytes.NewBuffer(b)
 
-	t := tr.TerminalRenderer(commonTerminalFlags)
+	t := cli.TerminalRenderer(commonTerminalFlags)
 	content := blackfriday.Markdown(c, t, 0)
-
-	fmt.Println("Call render herer ", len(content))
-
-	err := ioutil.WriteFile("./testdata/mm", content, 066)
-	if err != nil {
-		fmt.Println("eorr here", err)
-	}
 
 	return bytes.NewBuffer(content)
 }

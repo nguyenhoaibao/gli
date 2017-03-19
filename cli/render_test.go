@@ -1,11 +1,10 @@
-package tr_test
+package cli_test
 
 import (
-	"fmt"
 	"io/ioutil"
 	"testing"
 
-	"github.com/nguyenhoaibao/gli/tr"
+	"github.com/nguyenhoaibao/gli/cli"
 	"github.com/russross/blackfriday"
 )
 
@@ -15,18 +14,13 @@ func TestRender(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fmt.Println(string(content))
-
 	// out := blackfriday.MarkdownCommon(content)
 	// for i := range out {
 	// 	fmt.Print(string(out[i]))
 	// }
 
-	r := tr.TerminalRenderer(0)
+	r := cli.TerminalRenderer(0)
 	_ = blackfriday.Markdown(content, r, 0)
 
-	// err = ioutil.WriteFile("../testdata/m.md", content, 0666)
-
-	// fmt.Printf("%+q", c)
-	// fmt.Printf("%+q", string(c))
+	// fmt.Println(string(c))
 }

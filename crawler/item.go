@@ -74,16 +74,16 @@ func (c *itemCrawler) Crawl(id string) (ItemRenderer, error) {
 }
 
 func (c *itemCrawler) Download(url string) (*http.Response, error) {
-	// return http.Get(url)
+	return http.Get(url)
 	// content, err := ioutil.ReadFile("./testdata/markdown_content.md")
 	// if err != nil {
 	// 	return nil, err
 	// }
 
-	server := mockServer("")
-	defer server.Close()
+	// server := mockServer("")
+	// defer server.Close()
 
-	return http.Get(server.URL)
+	// return http.Get(server.URL)
 }
 
 func (c *itemCrawler) Parse(r io.Reader) (ItemRenderer, error) {

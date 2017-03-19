@@ -7,7 +7,7 @@ import (
 )
 
 func Print(r io.Reader, w io.Writer) error {
-	cmd := exec.Command("less", "-r", "-B")
+	cmd := exec.Command("less", "-R")
 	cmd.Stdin = r
 	cmd.Stdout = w
 

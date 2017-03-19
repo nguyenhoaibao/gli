@@ -1,4 +1,4 @@
-package tr
+package cli
 
 import (
 	"bytes"
@@ -12,27 +12,29 @@ import (
 const (
 	ListItemPadding = 2
 
-	BlockCodePadding = 4
-	BlockCodeFormat  = "```"
+	BlockCodePadding  = 4
+	BlockCodeMarkdown = "```"
 
-	InlineCodeFormat = "`"
+	InlineCodeMarkdown = "`"
 )
 
 const (
-	THeaderWithLevel = 1 << iota // Header with level
-	THeaderWithLineSuffix
+	THeaderMarkdown = 1 << iota // Header with level
+	THeaderAppendLine
 
-	TCodeWithBacktick // Code with backtick prefix and suffix
+	TCodeMarkdown // Code with backtick prefix and suffix
 )
 
 var (
 	listIndex = 1
 
 	Style = map[string][]color.Attribute{
-		"Heading":     []color.Attribute{color.FgYellow, color.Bold},
-		"Link":        []color.Attribute{color.FgCyan},
-		"LinkContent": []color.Attribute{color.FgBlue, color.Bold, color.Underline},
-		"CodeSpan":    []color.Attribute{color.FgHiMagenta},
+		"Heading":        []color.Attribute{color.FgYellow, color.Bold},
+		"Link":           []color.Attribute{color.FgCyan},
+		"LinkContent":    []color.Attribute{color.FgBlue, color.Bold, color.Underline},
+		"Emphasis":       []color.Attribute{color.Italic},
+		"DoubleEmphasis": []color.Attribute{color.Bold},
+		"CodeSpan":       []color.Attribute{color.FgHiMagenta},
 	}
 )
 
@@ -71,18 +73,18 @@ func tab(out *bytes.Buffer, padding int) {
 }
 
 func (t *Terminal) styleInlineCode(out *bytes.Buffer) {
-	if t.flags&TCodeWithBacktick == 0 {
+	if t.flags&TCodeMarkdown == 0 {
 		return
 	}
-	out.WriteString(InlineCodeFormat)
+	out.WriteString(InlineCodeMarkdown)
 }
 
 func (t *Terminal) styleBlockCode(out *bytes.Buffer) {
-	if t.flags&TCodeWithBacktick == 0 {
+	if t.flags&TCodeMarkdown == 0 {
 		return
 	}
 	tab(out, BlockCodePadding)
-	out.WriteString(BlockCodeFormat)
+	out.WriteString(BlockCodeMarkdown)
 }
 
 func (t *Terminal) writeInlineCode(out *bytes.Buffer, text string) {
@@ -110,14 +112,13 @@ func (t *Terminal) writeBlockCode(out *bytes.Buffer, text string) {
 
 // Block-level callbacks
 func (t *Terminal) BlockCode(out *bytes.Buffer, text []byte, lang string) {
-	fmt.Println("BlockCode")
-	out.WriteString("Block code here")
+	// fmt.Println("BlockCode")
 }
 func (t *Terminal) BlockQuote(out *bytes.Buffer, text []byte) {
-	fmt.Println("BlockQuote")
+	// fmt.Println("BlockQuote")
 }
 func (t *Terminal) BlockHtml(out *bytes.Buffer, text []byte) {
-	fmt.Println("BlockHtml")
+	// fmt.Println("BlockHtml")
 }
 
 func (t *Terminal) Header(out *bytes.Buffer, text func() bool, level int, id string) {
@@ -128,24 +129,19 @@ func (t *Terminal) Header(out *bytes.Buffer, text func() bool, level int, id str
 	color.Set(Style["Heading"]...)
 	defer color.Unset()
 
-	if t.flags&THeaderWithLevel != 0 {
+	if t.flags&THeaderMarkdown != 0 {
 		repeat(out, "#", level)
 		out.WriteByte(' ')
 	}
-
-	// fmt.Println(out.Bytes())
 
 	if !text() {
 		out.Truncate(marker)
 		return
 	}
 
-	// fmt.Println(out.Bytes())
-	// fmt.Printf("%+q", string(out.Bytes()))
-
 	if level == 1 || level == 2 {
 		newline(out)
-		if t.flags&THeaderWithLineSuffix != 0 {
+		if t.flags&THeaderAppendLine != 0 {
 			drawline(out)
 		}
 	}
@@ -155,7 +151,27 @@ func (t *Terminal) HRule(out *bytes.Buffer) {
 	fmt.Println("HRule")
 }
 
+func (t *Terminal) List(out *bytes.Buffer, text func() bool, flags int) {
+	// fmt.Println("list")
+	// fmt.Println("flags", flags)
+
+	marker := out.Len()
+	newline(out)
+
+	listIndex = 1
+
+	if !text() {
+		out.Truncate(marker)
+		return
+	}
+}
+
 func (t *Terminal) ListItem(out *bytes.Buffer, text []byte, flags int) {
+	// fmt.Println("list item", string(text))
+	// fmt.Println("flags", flags)
+	// fmt.Println("contain list", blackfriday.LIST_ITEM_CONTAINS_BLOCK)
+	// fmt.Println("list item contains block", flags&blackfriday.LIST_ITEM_CONTAINS_BLOCK)
+
 	if len(text) == 0 {
 		return
 	}
@@ -173,7 +189,6 @@ func (t *Terminal) ListItem(out *bytes.Buffer, text []byte, flags int) {
 
 func (t *Terminal) Paragraph(out *bytes.Buffer, text func() bool) {
 	marker := out.Len()
-	// newline(out)
 	doubleNewline(out)
 
 	if !text() {
@@ -182,30 +197,30 @@ func (t *Terminal) Paragraph(out *bytes.Buffer, text func() bool) {
 	}
 }
 func (t *Terminal) Table(out *bytes.Buffer, header []byte, body []byte, columnData []int) {
-	fmt.Println("Table")
+	// fmt.Println("Table")
 }
 func (t *Terminal) TableRow(out *bytes.Buffer, text []byte) {
-	fmt.Println("TableRow")
+	// fmt.Println("TableRow")
 }
 func (t *Terminal) TableHeaderCell(out *bytes.Buffer, text []byte, flags int) {
-	fmt.Println("TableHeaderCell")
+	// fmt.Println("TableHeaderCell")
 }
 func (t *Terminal) TableCell(out *bytes.Buffer, text []byte, flags int) {
-	fmt.Println("TableCell")
+	// fmt.Println("TableCell")
 }
 func (t *Terminal) Footnotes(out *bytes.Buffer, text func() bool) {
-	fmt.Println("Footnotes")
+	// fmt.Println("Footnotes")
 }
 func (t *Terminal) FootnoteItem(out *bytes.Buffer, name, text []byte, flags int) {
-	fmt.Println("FootnoteItem")
+	// fmt.Println("FootnoteItem")
 }
 func (t *Terminal) TitleBlock(out *bytes.Buffer, text []byte) {
-	fmt.Println("TitleBlock")
+	// fmt.Println("TitleBlock")
 }
 
 // Span-level callbacks
 func (t *Terminal) AutoLink(out *bytes.Buffer, link []byte, kind int) {
-	fmt.Println("AutoLink")
+	// fmt.Println("AutoLink")
 }
 
 func (t *Terminal) CodeSpan(out *bytes.Buffer, text []byte) {
@@ -222,11 +237,17 @@ func (t *Terminal) CodeSpan(out *bytes.Buffer, text []byte) {
 }
 
 func (t *Terminal) DoubleEmphasis(out *bytes.Buffer, text []byte) {
-	fmt.Println("DoubleEmphasis")
+	color.Output = out
+	color.Set(Style["DoubleEmphasis"]...)
+	out.Write(text)
+	color.Unset()
 }
 
 func (t *Terminal) Emphasis(out *bytes.Buffer, text []byte) {
-	fmt.Println("Emphasis", string(text))
+	color.Output = out
+	color.Set(Style["Emphasis"]...)
+	out.Write(text)
+	color.Unset()
 }
 
 func (t *Terminal) Image(out *bytes.Buffer, link []byte, title []byte, alt []byte) {
@@ -266,37 +287,25 @@ func (t *Terminal) Link(out *bytes.Buffer, link []byte, title []byte, content []
 	color.Unset()
 }
 
-func (t *Terminal) List(out *bytes.Buffer, text func() bool, flags int) {
-	marker := out.Len()
-	newline(out)
-
-	listIndex = 1
-
-	if !text() {
-		out.Truncate(marker)
-		return
-	}
-}
-
 func (t *Terminal) RawHtmlTag(out *bytes.Buffer, tag []byte) {
-	fmt.Println("RawHtmlTag")
+	// fmt.Println("RawHtmlTag")
 }
 
 func (t *Terminal) TripleEmphasis(out *bytes.Buffer, text []byte) {
-	fmt.Println("TripleEmphasis")
+	// fmt.Println("TripleEmphasis")
 }
 
 func (t *Terminal) StrikeThrough(out *bytes.Buffer, text []byte) {
-	fmt.Println("StrikeThrough")
+	// fmt.Println("StrikeThrough")
 }
 
 func (t *Terminal) FootnoteRef(out *bytes.Buffer, ref []byte, id int) {
-	fmt.Println("FootnoteRef")
+	// fmt.Println("FootnoteRef")
 }
 
 // Low-level callbacks
 func (t *Terminal) Entity(out *bytes.Buffer, entity []byte) {
-	fmt.Println("Entity")
+	// fmt.Println("Entity")
 }
 
 func (t *Terminal) NormalText(out *bytes.Buffer, text []byte) {
@@ -305,10 +314,10 @@ func (t *Terminal) NormalText(out *bytes.Buffer, text []byte) {
 
 // Header and footer
 func (t *Terminal) DocumentHeader(out *bytes.Buffer) {
-	fmt.Println("DocumentHeader")
+	// fmt.Println("DocumentHeader")
 }
 func (t *Terminal) DocumentFooter(out *bytes.Buffer) {
-	fmt.Println("DocumentFooter")
+	// fmt.Println("DocumentFooter")
 }
 
 func (t *Terminal) GetFlags() int {
